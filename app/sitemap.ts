@@ -23,12 +23,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return staticPages;
   }
 
-  // Product families
+  // Products
   const { data: products } = await supabase
     .from('products')
     .select('slug, updated_at');
 
-  const familyPages = (products || []).map((product) => ({
+  const productPages = (products || []).map((product) => ({
     url: `${baseUrl}/products/${product.slug}`,
     lastModified: new Date(product.updated_at),
     changeFrequency: 'monthly' as const,
@@ -62,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
-    ...familyPages,
+    ...productPages,
     ...variantPages,
     ...projectPages,
   ];

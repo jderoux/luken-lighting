@@ -11,11 +11,12 @@ export async function importVariants(rows: CsvVariantRow[]) {
   if (!supabase) return { error: 'Supabase not configured', inserted: 0, failed: 0 };
 
   const { data: categories } = await supabase.from('product_categories').select('id, slug');
-  const { data: products } = await supabase.from('products').select('id, slug, category_id');
+  const { data: products } = await supabase.from('products').select('id, slug, category_id, environment');
 
   const catMap = new Map((categories || []).map(c => [c.slug, c.id]));
   const prodMap = new Map((products || []).map(p => [p.slug, p.id]));
   const prodCatMap = new Map((products || []).map(p => [p.id, p.category_id]));
+  const prodEnvironmentMap = new Map((products || []).map(p => [p.id, p.environment]));
 
   const unknownCategories: string[] = [];
   for (const row of rows) {
@@ -57,6 +58,7 @@ export async function importVariants(rows: CsvVariantRow[]) {
 
     const prodId = row.product_slug ? prodMap.get(row.product_slug.trim()) ?? null : null;
     const categoryIdFromProduct = prodId ? prodCatMap.get(prodId) ?? null : null;
+    const environmentFromProduct = prodId ? prodEnvironmentMap.get(prodId) ?? null : null;
     const category_id = categoryIdFromProduct ?? catMap.get(row.category_slug.trim())!;
 
     return {
@@ -67,6 +69,7 @@ export async function importVariants(rows: CsvVariantRow[]) {
       long_description: row.long_description?.trim() || '',
       product_id: prodId,
       category_id,
+      environment: environmentFromProduct,
       mounting_type: row.mounting_type?.trim() || null,
       ip_rating: row.ip_rating?.trim() || null,
       light_source: row.light_source?.trim() || null,

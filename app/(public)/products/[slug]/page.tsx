@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: PageProps) {
   return genMeta({ title: 'Not Found' });
 }
 
-export default async function ProductOrFamilyPage({ params, searchParams }: PageProps) {
+export default async function ProductPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const filters = searchParams ? await searchParams : {};
   const supabase = await createClient();
@@ -88,7 +88,7 @@ export default async function ProductOrFamilyPage({ params, searchParams }: Page
       .order('name');
 
     return (
-      <FamilyView
+      <ProductView
         product={product}
         variants={(variants as ProductVariant[]) || []}
         filterMounting={filters.mounting}
@@ -169,9 +169,9 @@ function buildFilterUrl(
   return q ? `${base}?${q}` : base;
 }
 
-/* ─── Family view (iGuzzini-style) ─────────────────────────────────────────── */
+/* ─── Product view (iGuzzini-style) ────────────────────────────────────────── */
 
-function FamilyView({
+function ProductView({
   product,
   variants,
   filterMounting,
@@ -383,7 +383,7 @@ function FamilyView({
               <p className="text-gray-500">
                 {variants.length > 0
                   ? 'No variants match the selected filters.'
-                  : 'No variants in this family yet.'}
+                  : 'No variants in this product yet.'}
               </p>
             </div>
           )}

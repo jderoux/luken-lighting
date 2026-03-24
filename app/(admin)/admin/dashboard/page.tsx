@@ -46,7 +46,7 @@ export default async function AdminDashboard() {
           <div className="bg-white p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium uppercase tracking-wide text-gray-600">
-                Product Families
+                Products
               </h3>
               <Layers className="w-5 h-5 text-gray-400" />
             </div>
@@ -121,7 +121,7 @@ export default async function AdminDashboard() {
         <div className="bg-white p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium uppercase tracking-wide text-gray-600">
-              Product Families
+              Products
             </h3>
             <Layers className="w-5 h-5 text-gray-400" />
           </div>
@@ -211,8 +211,8 @@ export default async function AdminDashboard() {
           className="p-6 border-2 border-dashed border-gray-300 hover:border-gray-900 transition-colors text-center"
         >
           <Layers className="w-8 h-8 mx-auto mb-3 text-gray-400" />
-          <h3 className="font-medium uppercase tracking-wide mb-1">Product Families</h3>
-          <p className="text-sm text-gray-600">Manage product families</p>
+          <h3 className="font-medium uppercase tracking-wide mb-1">Products</h3>
+          <p className="text-sm text-gray-600">Manage products</p>
         </Link>
 
         <Link

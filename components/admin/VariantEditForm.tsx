@@ -34,8 +34,10 @@ export function VariantEditForm({
   const [selectedControlTypes, setSelectedControlTypes] = useState<string[]>(variant.control_types || []);
   const [selectedProductId, setSelectedProductId] = useState(variant.product_id || '');
   const [categoryId, setCategoryId] = useState(variant.category_id || '');
+  const [environment, setEnvironment] = useState(variant.environment || '');
   const [costUsd, setCostUsd] = useState<number | ''>(variant.cost_usd ?? '');
   const [distPrice, setDistPrice] = useState<number | ''>(variant.distributor_price ?? '');
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
   const initMargin = (variant.cost_usd && variant.distributor_price)
     ? calcMarginPct(variant.cost_usd, variant.distributor_price)
     : '';
@@ -91,7 +93,7 @@ export function VariantEditForm({
           <h2 className="text-lg font-medium uppercase tracking-wide border-b border-gray-200 pb-3">
             Basic Information
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <Input label="Variant Name" name="name" defaultValue={variant.name} required />
             <Input label="Code" name="code" defaultValue={variant.code} required />
           </div>
@@ -117,7 +119,7 @@ export function VariantEditForm({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Product Family</label>
+              <label className="block text-sm font-medium text-gray-700">Product</label>
               <select
                 name="product_id"
                 value={selectedProductId}
@@ -143,6 +145,29 @@ export function VariantEditForm({
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Environment</label>
+              <input
+                type="hidden"
+                name="environment"
+                value={selectedProductId ? selectedProduct?.environment || '' : environment}
+              />
+              <select
+                value={selectedProductId ? selectedProduct?.environment || '' : environment}
+                onChange={(e) => setEnvironment(e.target.value)}
+                disabled={Boolean(selectedProductId)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+              >
+                <option value="">— None —</option>
+                <option value="indoor">Indoor</option>
+                <option value="outdoor">Outdoor</option>
+              </select>
+              {selectedProductId && (
+                <p className="text-xs text-gray-500">
+                  Inherited from the selected product.
+                </p>
+              )}
             </div>
           </div>
         </section>

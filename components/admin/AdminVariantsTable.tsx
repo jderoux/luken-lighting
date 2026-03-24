@@ -114,7 +114,7 @@ export function AdminVariantsTable({ variants, categories, products }: Props) {
           onChange={(e) => { setProductFilter(e.target.value); setPage(1); }}
           className="px-3 py-2 text-xs border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white"
         >
-          <option value="">All Families</option>
+          <option value="">All Products</option>
           {products.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}

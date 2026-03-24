@@ -155,11 +155,12 @@ function ImageUploadSlot({
   );
 }
 
-export function ProductFamilyEditForm({ product, categories }: Props) {
+export function ProductEditForm({ product, categories }: Props) {
   const [name, setName] = useState(product.name);
   const [slug, setSlug] = useState(product.slug);
   const [description, setDescription] = useState(product.description || '');
   const [categoryId, setCategoryId] = useState(product.category_id || '');
+  const [environment, setEnvironment] = useState(product.environment || '');
   const [heroImageUrl, setHeroImageUrl] = useState(product.hero_image_url || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -176,6 +177,7 @@ export function ProductFamilyEditForm({ product, categories }: Props) {
     formData.set('slug', slug.trim());
     formData.set('description', description.trim());
     formData.set('category_id', categoryId || '');
+    formData.set('environment', environment || '');
     formData.set('hero_image_url', heroImageUrl.trim());
     formData.set('thumbnail_url', heroImageUrl.trim());
 
@@ -197,10 +199,10 @@ export function ProductFamilyEditForm({ product, categories }: Props) {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Product Families
+          Back to Products
         </Link>
         <h1 className="text-3xl font-light tracking-widest uppercase mb-2">
-          Edit Product Family
+          Edit Product
         </h1>
         <p className="text-gray-600">{product.name}</p>
       </div>
@@ -267,12 +269,26 @@ export function ProductFamilyEditForm({ product, categories }: Props) {
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Environment</label>
+          <select
+            name="environment"
+            value={environment}
+            onChange={(e) => setEnvironment(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+          >
+            <option value="">— None —</option>
+            <option value="indoor">Indoor</option>
+            <option value="outdoor">Outdoor</option>
+          </select>
+        </div>
+
         {/* Image upload */}
         <div className="border-t border-gray-200 pt-6">
           <h2 className="text-lg font-medium uppercase tracking-wide mb-6">Image</h2>
           <ImageUploadSlot
             label="Product Image"
-            hint="Used on the family page and as thumbnail in the products grid"
+            hint="Used on the product page and as thumbnail in the products grid"
             currentUrl={heroImageUrl}
             onUrlChange={setHeroImageUrl}
             productId={product.id}

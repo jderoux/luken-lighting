@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
-import { ProductFamilyEditForm } from '@/components/admin/ProductFamilyEditForm';
+import { ProductEditForm } from '@/components/admin/ProductFamilyEditForm';
 import type { Product, ProductCategory } from '@/lib/types';
 
 interface Props {
@@ -23,7 +23,7 @@ export default async function AdminProductEditPage({ params }: Props) {
   if (!product) notFound();
 
   return (
-    <ProductFamilyEditForm
+    <ProductEditForm
       product={product as Product}
       categories={(categories ?? []) as ProductCategory[]}
     />

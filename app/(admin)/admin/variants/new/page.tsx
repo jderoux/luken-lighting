@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 interface SimpleCategory { id: string; name: string; }
-interface SimpleProduct { id: string; name: string; category_id: string | null; }
+interface SimpleProduct { id: string; name: string; category_id: string | null; environment: 'indoor' | 'outdoor' | null; }
 
 export default function NewVariantPage() {
   const router = useRouter();
@@ -21,13 +21,15 @@ export default function NewVariantPage() {
   const [products, setProducts] = useState<SimpleProduct[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [environment, setEnvironment] = useState('');
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
 
   useEffect(() => {
     const supabase = createClient();
     if (!supabase) return;
     Promise.all([
       supabase.from('product_categories').select('id, name').order('sort_order'),
-      supabase.from('products').select('id, name, category_id').order('sort_order'),
+      supabase.from('products').select('id, name, category_id, environment').order('sort_order'),
     ]).then(([catRes, prodRes]) => {
       setCategories(catRes.data ?? []);
       setProducts(prodRes.data ?? []);
@@ -44,8 +46,11 @@ export default function NewVariantPage() {
     const slug = slugify(name);
 
     const effectiveCategoryId = selectedProductId
-      ? (products.find((p) => p.id === selectedProductId)?.category_id ?? categoryId) || null
+      ? (selectedProduct?.category_id ?? categoryId) || null
       : categoryId || null;
+    const effectiveEnvironment = selectedProductId
+      ? (selectedProduct?.environment ?? environment) || null
+      : environment || null;
 
     try {
       const supabase = createClient();
@@ -60,6 +65,7 @@ export default function NewVariantPage() {
           short_description: formData.get('short_description') as string,
           long_description: formData.get('long_description') as string || '',
           category_id: effectiveCategoryId,
+          environment: effectiveEnvironment,
           product_id: selectedProductId || null,
           manufacturer: formData.get('manufacturer') as string || null,
           manufacturer_sku: formData.get('manufacturer_sku') as string || null,
@@ -139,7 +145,7 @@ export default function NewVariantPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Product Family</label>
+                <label className="block text-sm font-medium text-gray-700">Product</label>
                 <select
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
@@ -164,6 +170,25 @@ export default function NewVariantPage() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Environment</label>
+              <select
+                value={selectedProductId ? selectedProduct?.environment || '' : environment}
+                onChange={(e) => setEnvironment(e.target.value)}
+                disabled={Boolean(selectedProductId)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+              >
+                <option value="">— None —</option>
+                <option value="indoor">Indoor</option>
+                <option value="outdoor">Outdoor</option>
+              </select>
+              {selectedProductId && (
+                <p className="text-xs text-gray-500">
+                  Inherited from the selected product.
+                </p>
+              )}
             </div>
           </div>
 

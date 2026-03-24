@@ -26,7 +26,7 @@ export async function createProduct(formData: FormData) {
     .eq('slug', slug)
     .single();
 
-  if (existing) return { error: `A product family with slug "${slug}" already exists` };
+  if (existing) return { error: `A product with slug "${slug}" already exists` };
 
   const { data: maxOrder } = await supabase
     .from('products')
@@ -37,10 +37,11 @@ export async function createProduct(formData: FormData) {
 
   const nextOrder = (maxOrder?.sort_order ?? 0) + 1;
   const category_id = (formData.get('category_id') as string) || null;
+  const environment = (formData.get('environment') as string) || null;
 
   const { error, data } = await supabase
     .from('products')
-    .insert({ name, slug, description, category_id, sort_order: nextOrder })
+    .insert({ name, slug, description, category_id, environment, sort_order: nextOrder })
     .select()
     .single();
 
@@ -68,16 +69,25 @@ export async function updateProduct(id: string, formData: FormData) {
     .neq('id', id)
     .single();
 
-  if (existing) return { error: `Another product family with slug "${slug}" already exists` };
+  if (existing) return { error: `Another product with slug "${slug}" already exists` };
 
   const category_id = (formData.get('category_id') as string) || null;
+  const environment = (formData.get('environment') as string) || null;
   const hero_image_url = (formData.get('hero_image_url') as string)?.trim() || null;
   const thumbnail_url = (formData.get('thumbnail_url') as string)?.trim() || null;
 
   const { error } = await supabase
     .from('products')
-    .update({ name, slug, description, category_id, hero_image_url, thumbnail_url })
+    .update({ name, slug, description, category_id, environment, hero_image_url, thumbnail_url })
     .eq('id', id);
+
+  if (!error) {
+    const { error: variantSyncError } = await supabase
+      .from('product_variants')
+      .update({ environment })
+      .eq('product_id', id);
+    if (variantSyncError) return { error: variantSyncError.message };
+  }
 
   if (error) return { error: error.message };
 
@@ -99,7 +109,7 @@ export async function deleteProduct(id: string) {
     .limit(1);
 
   if (variants && variants.length > 0) {
-    return { error: 'Cannot delete: this product family has variants assigned to it. Remove or reassign them first.' };
+    return { error: 'Cannot delete: this product has variants assigned to it. Remove or reassign them first.' };
   }
 
   const { error } = await supabase

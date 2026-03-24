@@ -9,14 +9,16 @@ export async function updateVariant(variantId: string, formData: FormData) {
 
   const productId = (formData.get('product_id') as string) || null;
   let categoryId = (formData.get('category_id') as string) || null;
+  let environment = (formData.get('environment') as string) || null;
 
   if (productId) {
     const { data: product } = await supabase
       .from('products')
-      .select('category_id')
+      .select('category_id, environment')
       .eq('id', productId)
       .single();
     if (product?.category_id) categoryId = product.category_id;
+    if (product?.environment) environment = product.environment;
   }
 
   const data: Record<string, any> = {
@@ -26,6 +28,7 @@ export async function updateVariant(variantId: string, formData: FormData) {
     short_description: formData.get('short_description'),
     long_description: formData.get('long_description'),
     category_id: categoryId,
+    environment,
     product_id: productId,
     mounting_type: formData.get('mounting_type') || null,
     ip_rating: formData.get('ip_rating') || null,

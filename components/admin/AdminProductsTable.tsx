@@ -11,6 +11,7 @@ interface ProductRow {
   name: string;
   slug: string;
   description: string;
+  environment: 'indoor' | 'outdoor' | null;
   category_id: string | null;
   hero_image_url: string | null;
   thumbnail_url: string | null;
@@ -97,7 +98,7 @@ export function AdminProductsTable({ products, categories }: Props) {
           ))}
         </select>
         <span className="text-xs text-gray-500 ml-auto">
-          {filtered.length} famil{filtered.length !== 1 ? 'ies' : 'y'}
+          {filtered.length} product{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -109,6 +110,7 @@ export function AdminProductsTable({ products, categories }: Props) {
                 <th className="px-2 py-2 w-12"></th>
                 <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">Name</th>
                 <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">Category</th>
+                <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">Environment</th>
                 <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">Slug</th>
                 <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-500">Description</th>
                 <th className="px-3 py-2 w-24"></th>
@@ -134,6 +136,9 @@ export function AdminProductsTable({ products, categories }: Props) {
                     </td>
                     <td className="px-3 py-1.5 text-xs text-gray-500">
                       {prod.category_id ? catMap.get(prod.category_id) || '—' : '—'}
+                    </td>
+                    <td className="px-3 py-1.5 text-xs text-gray-500 capitalize">
+                      {prod.environment || '—'}
                     </td>
                     <td className="px-3 py-1.5 text-xs text-gray-500 font-mono">{prod.slug}</td>
                     <td className="px-3 py-1.5 text-xs text-gray-500 max-w-[200px] truncate">
@@ -164,7 +169,7 @@ export function AdminProductsTable({ products, categories }: Props) {
 
           {pageProducts.length === 0 && (
             <div className="text-center py-12 text-xs text-gray-500">
-              No product families match your filters.
+              No products match your filters.
             </div>
           )}
         </div>
@@ -187,7 +192,7 @@ export function AdminProductsTable({ products, categories }: Props) {
           <span>
             {filtered.length > 0
               ? `${start + 1}–${Math.min(start + pageSize, filtered.length)} of ${filtered.length}`
-              : '0 families'}
+              : '0 products'}
           </span>
           <div className="flex items-center gap-1">
             <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} className="p-1 border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed">

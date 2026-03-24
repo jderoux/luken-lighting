@@ -36,6 +36,7 @@ export default function NewProductPage() {
     const name = (formData.get('name') as string).trim();
     const description = (formData.get('description') as string || '').trim();
     const categoryId = (formData.get('category_id') as string) || null;
+    const environment = (formData.get('environment') as string) || null;
     const slug = slugify(name);
 
     try {
@@ -53,7 +54,7 @@ export default function NewProductPage() {
 
       const { error: insertError, data } = await supabase
         .from('products')
-        .insert({ name, slug, description, category_id: categoryId, sort_order: nextOrder })
+        .insert({ name, slug, description, category_id: categoryId, environment, sort_order: nextOrder })
         .select()
         .single();
 
@@ -78,18 +79,18 @@ export default function NewProductPage() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Product Families
+          Back to Products
         </Link>
         <h1 className="text-3xl font-light tracking-widest uppercase mb-2">
-          Add New Product Family
+          Add New Product
         </h1>
-        <p className="text-gray-600">Create a new product family</p>
+        <p className="text-gray-600">Create a new product</p>
       </div>
 
       <div className="bg-white border border-gray-200 p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
-            label="Family Name"
+            label="Product Name"
             name="name"
             type="text"
             required
@@ -113,12 +114,26 @@ export default function NewProductPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Environment
+            </label>
+            <select
+              name="environment"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 bg-white"
+            >
+              <option value="">— None —</option>
+              <option value="indoor">Indoor</option>
+              <option value="outdoor">Outdoor</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
             <textarea
               name="description"
               rows={4}
-              placeholder="Brief description of this product family"
+              placeholder="Brief description of this product"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 text-gray-900"
             />
           </div>
@@ -129,7 +144,7 @@ export default function NewProductPage() {
 
           <div className="flex gap-4 pt-6 border-t border-gray-200">
             <Button type="submit" variant="primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Family'}
+              {isSubmitting ? 'Creating...' : 'Create Product'}
             </Button>
             <Link href="/admin/products">
               <Button type="button" variant="secondary">Cancel</Button>
@@ -137,7 +152,7 @@ export default function NewProductPage() {
           </div>
 
           <p className="text-sm text-gray-500">
-            After creating the family, you can upload images and add variants.
+            After creating the product, you can upload images and add variants.
           </p>
         </form>
       </div>

@@ -167,7 +167,7 @@ export function ProductFamiliesManager({ initialProducts, categories }: Props) {
   };
 
   const handleDelete = async (prod: Product) => {
-    if (!confirm(`Delete product family "${prod.name}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete product "${prod.name}"? This cannot be undone.`)) return;
     setError('');
     const result = await deleteProduct(prod.id);
     if (result.error) { setError(result.error); }
@@ -188,13 +188,13 @@ export function ProductFamiliesManager({ initialProducts, categories }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-light tracking-widest uppercase mb-2">Product Families</h1>
-          <p className="text-gray-600">Manage product families</p>
+          <h1 className="text-3xl font-light tracking-widest uppercase mb-2">Products</h1>
+          <p className="text-gray-600">Manage products</p>
         </div>
         {!showCreate && (
           <Button type="button" variant="primary" onClick={() => { setShowCreate(true); setEditingId(null); setError(''); }}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Family
+            Add Product
           </Button>
         )}
       </div>
@@ -250,14 +250,14 @@ export function ProductFamiliesManager({ initialProducts, categories }: Props) {
         </DndContext>
 
         {products.length === 0 && !showCreate && (
-          <div className="px-4 py-8 text-center text-gray-500 text-sm">No product families yet. Create your first one.</div>
+          <div className="px-4 py-8 text-center text-gray-500 text-sm">No products yet. Create your first one.</div>
         )}
 
         {showCreate && (
           <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-200 items-center bg-green-50">
             <div className="col-span-1"></div>
             <div className="col-span-3">
-              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Family name" className="w-full px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-900" autoFocus />
+              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Product name" className="w-full px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-900" autoFocus />
             </div>
             <div className="col-span-2">
               <select value={newCategoryId} onChange={(e) => setNewCategoryId(e.target.value)} className="w-full px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white">

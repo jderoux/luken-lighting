@@ -13,9 +13,9 @@ export default async function AdminProductsPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-light tracking-widest uppercase mb-2">
-            Product Families
+            Products
           </h1>
-          <p className="text-gray-600">Manage product families</p>
+          <p className="text-gray-600">Manage products</p>
         </div>
         <div className="p-6 bg-yellow-50 border border-yellow-200 text-yellow-800">
           <p className="font-medium">Supabase not configured</p>
@@ -38,14 +38,14 @@ export default async function AdminProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-light tracking-widest uppercase mb-2">
-            Product Families
+            Products
           </h1>
-          <p className="text-gray-600">Manage product families</p>
+          <p className="text-gray-600">Manage products</p>
         </div>
         <Link href="/admin/products/new">
           <Button variant="primary">
             <Plus className="w-4 h-4 mr-2" />
-            Add Family
+            Add Product
           </Button>
         </Link>
       </div>
@@ -53,9 +53,9 @@ export default async function AdminProductsPage() {
       {products.length === 0 ? (
         <div className="bg-white border border-gray-200 text-center py-16">
           <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-500 mb-4">No product families yet</p>
+          <p className="text-gray-500 mb-4">No products yet</p>
           <Link href="/admin/products/new">
-            <Button variant="primary">Create Your First Family</Button>
+            <Button variant="primary">Create Your First Product</Button>
           </Link>
         </div>
       ) : (

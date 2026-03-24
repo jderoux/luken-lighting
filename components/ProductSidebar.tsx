@@ -13,6 +13,7 @@ interface CategoryWithCount extends ProductCategory {
 interface ProductSidebarProps {
   categories: CategoryWithCount[];
   totalProducts: number;
+  environments: { value: 'indoor' | 'outdoor'; label: string; count: number }[];
 }
 
 function CollapsibleSection({
@@ -52,12 +53,13 @@ function CollapsibleSection({
   );
 }
 
-function SidebarContent({ categories, totalProducts }: ProductSidebarProps) {
+function SidebarContent({ categories, totalProducts, environments }: ProductSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
   const currentCategory = searchParams.get('category') || '';
+  const currentEnvironment = searchParams.get('environment') || '';
   const currentSearch = searchParams.get('search') || '';
 
   const updateFilter = useCallback(
@@ -81,7 +83,7 @@ function SidebarContent({ categories, totalProducts }: ProductSidebarProps) {
     });
   }, [router, startTransition]);
 
-  const hasActiveFilters = currentCategory || currentSearch;
+  const hasActiveFilters = currentCategory || currentEnvironment || currentSearch;
 
   return (
     <div className={cn('space-y-0', isPending && 'opacity-60 pointer-events-none')}>
@@ -118,7 +120,42 @@ function SidebarContent({ categories, totalProducts }: ProductSidebarProps) {
         </div>
       </div>
 
-      {/* Categories */}
+      {/* Environment */}
+      <CollapsibleSection title="Environment">
+        <ul className="space-y-1">
+          <li>
+            <button
+              onClick={() => updateFilter('environment', '')}
+              className={cn(
+                'flex w-full items-center justify-between py-1.5 text-sm transition-colors',
+                !currentEnvironment
+                  ? 'text-gray-900 font-medium'
+                  : 'text-gray-600 hover:text-gray-900'
+              )}
+            >
+              <span>All Environments</span>
+              <span className="text-xs text-gray-400">{totalProducts}</span>
+            </button>
+          </li>
+          {environments.map((env) => (
+            <li key={env.value}>
+              <button
+                onClick={() => updateFilter('environment', env.value)}
+                className={cn(
+                  'flex w-full items-center justify-between py-1.5 text-sm transition-colors',
+                  currentEnvironment === env.value
+                    ? 'text-gray-900 font-medium'
+                    : 'text-gray-600 hover:text-gray-900'
+                )}
+              >
+                <span>{env.label}</span>
+                <span className="text-xs text-gray-400">{env.count}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleSection>
+
       {categories.length > 0 && (
         <CollapsibleSection title="Category">
           <ul className="space-y-1">

@@ -8,13 +8,14 @@ import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata = genMeta({
   title: 'Products',
-  description: 'Browse our complete range of architectural lighting families — minimal fixtures designed to integrate invisibly into any space.',
+  description: 'Browse our complete range of architectural lighting products — minimal fixtures designed to integrate invisibly into any space.',
   path: '/products',
 });
 
 interface ProductsPageProps {
   searchParams: Promise<{
     category?: string;
+    environment?: 'indoor' | 'outdoor';
     search?: string;
   }>;
 }
@@ -57,10 +58,17 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const activeCategory = params.category
     ? categories.find((c) => c.slug === params.category) ?? null
     : null;
+  const activeEnvironment = params.environment || '';
 
-  let displayProducts = activeCategory
-    ? allProducts.filter((p) => p.category_id === activeCategory.id)
-    : allProducts;
+  let displayProducts = allProducts;
+
+  if (activeEnvironment) {
+    displayProducts = displayProducts.filter((p) => p.environment === activeEnvironment);
+  }
+
+  if (activeCategory) {
+    displayProducts = displayProducts.filter((p) => p.category_id === activeCategory.id);
+  }
 
   if (params.search) {
     const q = params.search.toLowerCase();
@@ -75,6 +83,18 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     ...cat,
     productCount: allProducts.filter((p) => p.category_id === cat.id).length,
   }));
+  const environmentsWithCount = [
+    {
+      value: 'indoor' as const,
+      label: 'Indoor',
+      count: allProducts.filter((p) => p.environment === 'indoor').length,
+    },
+    {
+      value: 'outdoor' as const,
+      label: 'Outdoor',
+      count: allProducts.filter((p) => p.environment === 'outdoor').length,
+    },
+  ];
 
   return (
     <div className="py-12 lg:py-16">
@@ -94,6 +114,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <ProductSidebar
               categories={categoriesWithCount}
               totalProducts={allProducts.length}
+              environments={environmentsWithCount}
             />
           </Suspense>
         </div>
@@ -104,6 +125,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <ProductSidebar
               categories={categoriesWithCount}
               totalProducts={allProducts.length}
+              environments={environmentsWithCount}
             />
           </Suspense>
 
@@ -112,7 +134,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             {/* Results count */}
             <div className="mb-6 flex items-center justify-between">
               <p className="text-sm text-gray-500">
-                {displayProducts.length} product{displayProducts.length !== 1 ? ' families' : ' family'}
+                {displayProducts.length} product{displayProducts.length !== 1 ? 's' : ''}
+                {activeEnvironment && (
+                  <> in <span className="text-gray-900 font-medium capitalize">{activeEnvironment}</span></>
+                )}
                 {activeCategory && (
                   <> in <span className="text-gray-900 font-medium">{activeCategory.name}</span></>
                 )}
@@ -154,11 +179,15 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             ) : (
               <div className="text-center py-16">
                 <p className="text-gray-500">
-                  {activeCategory
-                    ? `No product families found in ${activeCategory.name}.`
-                    : params.search
-                      ? 'No products match your search.'
-                      : 'No product families available yet.'}
+                  {params.search
+                    ? 'No products match your search.'
+                    : activeCategory && activeEnvironment
+                      ? `No products found in ${activeEnvironment} / ${activeCategory.name}.`
+                      : activeCategory
+                        ? `No products found in ${activeCategory.name}.`
+                        : activeEnvironment
+                          ? `No products found in ${activeEnvironment}.`
+                          : 'No products available yet.'}
                 </p>
               </div>
             )}

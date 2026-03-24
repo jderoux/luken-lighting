@@ -1,5 +1,5 @@
 // Database types matching Supabase schema
-// Naming: products = families, product_variants = configurations, product_skus = permutations
+// Naming: products = base products, product_variants = configurations, product_skus = permutations
 
 export interface ProductCategory {
   id: string;
@@ -45,6 +45,7 @@ export interface Product {
   slug: string;
   name: string;
   description: string;
+  environment: ProductEnvironment | null;
   category_id: string | null;
   hero_image_url: string | null;
   thumbnail_url: string | null;
@@ -54,6 +55,7 @@ export interface Product {
 }
 
 export type MountingType = 'recessed' | 'surface' | 'pendant' | 'wall' | 'track';
+export type ProductEnvironment = 'indoor' | 'outdoor';
 export type LightSource = 'LED Integrated' | 'GU10' | 'E27' | 'E14' | 'GU5.3' | 'Other';
 export type IpRating = 'IP20' | 'IP44' | 'IP54' | 'IP65' | 'IP67' | 'IP68';
 export type ElectricalClass = 'Class I' | 'Class II' | 'Class III';
@@ -93,6 +95,7 @@ export interface ProductVariant {
   long_description: string;
   category_id: string;
   product_id: string | null;
+  environment: ProductEnvironment | null;
   
   mounting_type: MountingType | null;
   ip_rating: string | null;
