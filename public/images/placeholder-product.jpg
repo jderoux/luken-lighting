@@ -1,0 +1,12 @@
+Placeholder file - Replace with actual product images
+In production, upload actual images to:
+1. Supabase Storage buckets
+2. Or place in public/images/ directory
+
+Recommended image specifications:
+- Format: JPG or WebP
+- Size: 1200x1200px minimum
+- Quality: High (80-90%)
+- Background: White or transparent
+- Naming: Use descriptive names (product-code-view.jpg)
+

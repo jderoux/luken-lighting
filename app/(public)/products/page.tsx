@@ -1,0 +1,170 @@
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { Container } from '@/components/ui/Container';
+import { ProductSidebar } from '@/components/ProductSidebar';
+import { createClient } from '@/lib/supabase/server';
+import { Product, ProductCategory } from '@/lib/types';
+import { generateMetadata as genMeta } from '@/lib/seo';
+
+export const metadata = genMeta({
+  title: 'Products',
+  description: 'Browse our complete range of architectural lighting families — minimal fixtures designed to integrate invisibly into any space.',
+  path: '/products',
+});
+
+interface ProductsPageProps {
+  searchParams: Promise<{
+    category?: string;
+    search?: string;
+  }>;
+}
+
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const params = await searchParams;
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return (
+      <div className="py-12 lg:py-16">
+        <Container>
+          <div className="mb-12">
+            <h1 className="text-4xl lg:text-5xl font-light tracking-widest uppercase mb-4">
+              Products
+            </h1>
+            <p className="text-gray-600 max-w-2xl">
+              Architectural lighting with clean, minimal lines — designed to let the space shine
+            </p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 p-8 text-center">
+            <h3 className="text-lg font-medium mb-2">Supabase Not Configured</h3>
+            <p className="text-gray-600 mb-4">
+              Please configure your Supabase credentials in <code className="bg-white px-2 py-1 rounded">.env.local</code> to view products.
+            </p>
+          </div>
+        </Container>
+      </div>
+    );
+  }
+
+  const [categoriesRes, productsRes] = await Promise.all([
+    supabase.from('product_categories').select('*').order('sort_order'),
+    supabase.from('products').select('*').order('sort_order'),
+  ]);
+
+  const categories = (categoriesRes.data ?? []) as ProductCategory[];
+  const allProducts = (productsRes.data ?? []) as Product[];
+
+  const activeCategory = params.category
+    ? categories.find((c) => c.slug === params.category) ?? null
+    : null;
+
+  let displayProducts = activeCategory
+    ? allProducts.filter((p) => p.category_id === activeCategory.id)
+    : allProducts;
+
+  if (params.search) {
+    const q = params.search.toLowerCase();
+    displayProducts = displayProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q))
+    );
+  }
+
+  const categoriesWithCount = categories.map((cat) => ({
+    ...cat,
+    productCount: allProducts.filter((p) => p.category_id === cat.id).length,
+  }));
+
+  return (
+    <div className="py-12 lg:py-16">
+      <Container>
+        <div className="mb-10">
+          <h1 className="text-4xl lg:text-5xl font-light tracking-widest uppercase mb-4">
+            Products
+          </h1>
+          <p className="text-gray-600 max-w-2xl">
+            Architectural lighting with clean, minimal lines — designed to let the space shine
+          </p>
+        </div>
+
+        {/* Mobile filter trigger */}
+        <div className="mb-6 lg:hidden">
+          <Suspense>
+            <ProductSidebar
+              categories={categoriesWithCount}
+              totalProducts={allProducts.length}
+            />
+          </Suspense>
+        </div>
+
+        <div className="flex gap-0">
+          {/* Desktop sidebar */}
+          <Suspense>
+            <ProductSidebar
+              categories={categoriesWithCount}
+              totalProducts={allProducts.length}
+            />
+          </Suspense>
+
+          {/* Product grid */}
+          <div className="flex-1 min-w-0">
+            {/* Results count */}
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                {displayProducts.length} product{displayProducts.length !== 1 ? ' families' : ' family'}
+                {activeCategory && (
+                  <> in <span className="text-gray-900 font-medium">{activeCategory.name}</span></>
+                )}
+              </p>
+            </div>
+
+            {displayProducts.length > 0 ? (
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {displayProducts.map((product) => (
+                  <Link
+                    key={product.id}
+                    href={`/products/${product.slug}`}
+                    className="group"
+                  >
+                    <div className="space-y-4">
+                      <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+                        {(product.thumbnail_url || product.hero_image_url) ? (
+                          <img
+                            src={product.thumbnail_url || product.hero_image_url!}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-100 group-hover:scale-105 transition-transform duration-500" />
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-medium tracking-wide uppercase group-hover:text-brand-copper transition-colors">
+                          {product.name}
+                        </h2>
+                        <p className="text-sm text-gray-600 mt-1 leading-relaxed line-clamp-2">
+                          {product.description}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-gray-500">
+                  {activeCategory
+                    ? `No product families found in ${activeCategory.name}.`
+                    : params.search
+                      ? 'No products match your search.'
+                      : 'No product families available yet.'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Container>
+    </div>
+  );
+}
