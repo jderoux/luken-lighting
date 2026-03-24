@@ -21,6 +21,7 @@ export default function AdminLoginPage() {
 
     try {
       const supabase = createClient();
+      if (!supabase) throw new Error('Supabase not configured');
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,

@@ -154,8 +154,11 @@ export async function deleteEntityImage(
     .eq('id', entityId)
     .single();
 
-  if (current?.[field]) {
-    const storagePath = extractStoragePath(current[field]);
+  const currentRecord = current as Record<string, string | null> | null;
+  const currentValue = currentRecord?.[field];
+
+  if (currentValue) {
+    const storagePath = extractStoragePath(currentValue);
     if (storagePath) {
       await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
     }

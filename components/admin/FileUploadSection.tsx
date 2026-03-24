@@ -37,6 +37,7 @@ export function FileUploadSection({ productId, assets: initialAssets }: Props) {
 
     try {
       const supabase = createClient();
+      if (!supabase) throw new Error('Supabase not configured');
       const typeInfo = ASSET_TYPES.find((t) => t.value === assetType);
       const bucket = typeInfo?.bucket || 'documents';
       const ext = file.name.split('.').pop()?.toLowerCase() || '';
@@ -76,6 +77,7 @@ export function FileUploadSection({ productId, assets: initialAssets }: Props) {
 
     try {
       const supabase = createClient();
+      if (!supabase) throw new Error('Supabase not configured');
       const isImage = asset.type === 'image';
       const bucket = isImage ? 'product-images' : 'documents';
 

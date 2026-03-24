@@ -19,6 +19,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
+  if (!supabase) {
+    return staticPages;
+  }
+
   // Product families
   const { data: products } = await supabase
     .from('products')

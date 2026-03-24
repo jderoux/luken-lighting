@@ -16,11 +16,13 @@ export default async function ProfessionalsPage() {
   const siteImages = await getSiteImages();
 
   // Fetch general catalogues and documents (not linked to specific products)
-  const { data: generalDocs } = await supabase
-    .from('product_assets')
-    .select('*')
-    .is('product_id', null)
-    .order('sort_order');
+  const { data: generalDocs } = supabase
+    ? await supabase
+        .from('product_assets')
+        .select('*')
+        .is('product_id', null)
+        .order('sort_order')
+    : { data: null };
 
   // Group documents by type
   const catalogues = generalDocs?.filter(doc => doc.type === 'catalogue') || [];

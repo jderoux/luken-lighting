@@ -15,6 +15,9 @@ interface ProjectPageProps {
 export async function generateMetadata({ params }: ProjectPageProps) {
   const { slug } = await params;
   const supabase = await createClient();
+  if (!supabase) {
+    return genMeta({ title: 'Project Not Found' });
+  }
   
   const { data: project } = await supabase
     .from('inspiration_projects')
@@ -36,6 +39,9 @@ export async function generateMetadata({ params }: ProjectPageProps) {
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { slug } = await params;
   const supabase = await createClient();
+  if (!supabase) {
+    notFound();
+  }
 
   const { data: project, error: projectError } = await supabase
     .from('inspiration_projects')
