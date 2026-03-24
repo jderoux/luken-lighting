@@ -108,19 +108,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           </p>
         </div>
 
-        {/* Mobile filter trigger */}
-        <div className="mb-6 lg:hidden">
-          <Suspense>
-            <ProductSidebar
-              categories={categoriesWithCount}
-              totalProducts={allProducts.length}
-              environments={environmentsWithCount}
-            />
-          </Suspense>
-        </div>
-
-        <div className="flex gap-0">
-          {/* Desktop sidebar */}
+        <div className="flex flex-col lg:flex-row gap-0">
+          {/* Sidebar: shows filter button on mobile, full sidebar on desktop */}
           <Suspense>
             <ProductSidebar
               categories={categoriesWithCount}

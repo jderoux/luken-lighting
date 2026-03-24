@@ -220,22 +220,22 @@ function ProductView({
     <div className="py-8 lg:py-12">
       <Container>
         {/* Breadcrumb */}
-        <nav className="mb-8 flex items-center gap-1.5 text-sm text-gray-500">
-          <Link href="/" className="hover:text-gray-900 transition-colors">
+        <nav className="mb-8 flex items-center gap-1.5 text-sm text-gray-500 overflow-x-auto whitespace-nowrap pb-2 -mb-2 lg:pb-0 lg:mb-8">
+          <Link href="/" className="hover:text-gray-900 transition-colors flex-shrink-0">
             Home
           </Link>
-          <ChevronRight className="h-3.5 w-3.5" />
-          <Link href="/products" className="hover:text-gray-900 transition-colors">
+          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+          <Link href="/products" className="hover:text-gray-900 transition-colors flex-shrink-0">
             Products
           </Link>
           {categoryName && (
             <>
-              <ChevronRight className="h-3.5 w-3.5" />
-              <span className="text-gray-400">{categoryName}</span>
+              <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="text-gray-400 flex-shrink-0">{categoryName}</span>
             </>
           )}
-          <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-gray-900">{product.name}</span>
+          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+          <span className="text-gray-900 flex-shrink-0">{product.name}</span>
         </nav>
 
         {/* Hero: two-column layout */}
@@ -347,7 +347,7 @@ function ProductView({
           {/* Filters */}
           {variants.length > 0 &&
             (uniqueMounting.length > 0 || uniqueIp.length > 0 || uniqueControl.length > 0) && (
-              <div className="mb-6 flex flex-wrap items-center gap-6 pb-6 border-b border-gray-200">
+              <div className="mb-6 flex flex-wrap items-center gap-4 sm:gap-6 pb-6 border-b border-gray-200 overflow-x-auto">
                 {uniqueMounting.length > 0 && (
                   <FilterGroup
                     label="Mounting"
@@ -407,8 +407,8 @@ function FilterGroup({
   labels?: Record<string, string>;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs text-gray-500 uppercase tracking-wide">{label}</span>
+    <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+      <span className="text-xs text-gray-500 uppercase tracking-wide whitespace-nowrap">{label}</span>
       <Link
         href={buildUrl(null)}
         className={`px-3 py-1.5 text-xs border transition-colors ${
@@ -523,8 +523,8 @@ function VariantView({
   );
 
   const specsContent = (
-    <div className="border border-gray-200 overflow-hidden">
-      <table className="w-full">
+    <div className="border border-gray-200 overflow-x-auto">
+      <table className="w-full min-w-[400px]">
         <tbody>
           <SpecRow label="Mounting Type" value={variant.mounting_type} />
           <SpecRow label="Light Source" value={variant.light_source} />
@@ -615,27 +615,27 @@ function VariantView({
     <div className="py-8 lg:py-12">
       <Container>
         {/* Breadcrumb */}
-        <nav className="mb-8 flex items-center gap-1.5 text-sm text-gray-500">
-          <Link href="/" className="hover:text-gray-900 transition-colors">
+        <nav className="mb-8 flex items-center gap-1.5 text-sm text-gray-500 overflow-x-auto whitespace-nowrap pb-2 -mb-2 lg:pb-0 lg:mb-8">
+          <Link href="/" className="hover:text-gray-900 transition-colors flex-shrink-0">
             Home
           </Link>
-          <ChevronRight className="h-3.5 w-3.5" />
-          <Link href="/products" className="hover:text-gray-900 transition-colors">
+          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+          <Link href="/products" className="hover:text-gray-900 transition-colors flex-shrink-0">
             Products
           </Link>
           {variant.product && (
             <>
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
               <Link
                 href={`/products/${variant.product.slug}`}
-                className="hover:text-gray-900 transition-colors"
+                className="hover:text-gray-900 transition-colors flex-shrink-0"
               >
                 {variant.product.name}
               </Link>
             </>
           )}
-          <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-gray-900">{variant.name}</span>
+          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+          <span className="text-gray-900 flex-shrink-0">{variant.name}</span>
         </nav>
 
         {/* Hero: image + info */}
@@ -761,8 +761,8 @@ function VariantView({
             <h2 className="text-2xl font-light tracking-wide uppercase mb-6">
               Product Codes
             </h2>
-            <div className="border border-gray-200 overflow-hidden">
-              <table className="w-full">
+            <div className="border border-gray-200 overflow-x-auto">
+              <table className="w-full min-w-[500px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">

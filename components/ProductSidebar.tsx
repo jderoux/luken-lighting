@@ -204,7 +204,7 @@ export function ProductSidebar(props: ProductSidebarProps) {
       {/* Mobile trigger */}
       <button
         onClick={() => setDrawerOpen(true)}
-        className="lg:hidden flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-sm uppercase tracking-wide text-gray-700 hover:border-gray-900 transition-colors"
+        className="lg:hidden mb-6 flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-sm uppercase tracking-wide text-gray-700 hover:border-gray-900 transition-colors"
       >
         <SlidersHorizontal className="h-4 w-4" />
         Filters

@@ -26,13 +26,13 @@ export function ProductTabs({ tabs, defaultTab }: ProductTabsProps) {
     <div>
       {/* Tab headers */}
       <div className="border-b border-gray-200">
-        <div className="flex gap-0">
+        <div className="flex gap-0 overflow-x-auto -mb-px">
           {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'px-6 py-3.5 text-sm uppercase tracking-wider transition-colors relative',
+                'px-4 sm:px-6 py-3.5 text-sm uppercase tracking-wider transition-colors relative whitespace-nowrap flex-shrink-0',
                 active.id === tab.id
                   ? 'text-gray-900 font-medium'
                   : 'text-gray-500 hover:text-gray-700'
