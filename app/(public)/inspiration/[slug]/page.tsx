@@ -174,7 +174,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     <div className="relative aspect-square bg-gray-100 overflow-hidden">
                       {(product.thumbnail_url || product.hero_image_url) ? (
                         <img
-                          src={product.thumbnail_url || product.hero_image_url}
+                          src={product.thumbnail_url || product.hero_image_url || undefined}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
