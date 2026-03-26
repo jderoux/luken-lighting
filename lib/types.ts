@@ -59,7 +59,7 @@ export type ProductEnvironment = 'indoor' | 'outdoor';
 export type LightSource = 'LED Integrated' | 'GU10' | 'E27' | 'E14' | 'GU5.3' | 'Other';
 export type IpRating = 'IP20' | 'IP44' | 'IP54' | 'IP65' | 'IP67' | 'IP68';
 export type ElectricalClass = 'Class I' | 'Class II' | 'Class III';
-export type ControlType = 'on-off' | 'phase' | 'dali' | '0-10v' | '1-10v' | 'casambi' | 'zigbee' | 'dmx' | 'push';
+export type ControlType = 'on-off' | 'phase' | 'dali' | '0-10v' | '1-10v' | 'casambi' | 'zigbee' | 'dmx' | 'push' | 'driver-not-included';
 
 export const CONTROL_TYPE_LABELS: Record<ControlType, string> = {
   'on-off': 'On/Off',
@@ -71,19 +71,18 @@ export const CONTROL_TYPE_LABELS: Record<ControlType, string> = {
   'zigbee': 'Zigbee',
   'dmx': 'DMX512',
   'push': 'Push-dim',
+  'driver-not-included': 'Driver Not Included',
 };
 
 export const ALL_CONTROL_TYPES: ControlType[] = [
-  'on-off', 'phase', 'dali', '0-10v', '1-10v', 'casambi', 'zigbee', 'dmx', 'push',
+  'on-off', 'phase', 'dali', '0-10v', '1-10v', 'casambi', 'zigbee', 'dmx', 'push', 'driver-not-included',
 ];
 
 export interface ProductDimensions {
-  diameter_mm?: number;
-  height_mm?: number;
-  cutout_mm?: number;
-  depth_mm?: number;
   width_mm?: number;
+  height_mm?: number;
   length_mm?: number;
+  weight_kg?: number;
 }
 
 export interface ProductVariant {
@@ -101,11 +100,14 @@ export interface ProductVariant {
   ip_rating: string | null;
   light_source: string | null;
   power_w: number | null;
+  power_w_system: number | null;
   lumens: number | null;
+  lumens_system: number | null;
   efficacy_lm_per_w: number | null;
   cct_min: number | null;
   cct_max: number | null;
   cri: number | null;
+  beam_angle: number | null;
   control_types: string[];
   voltage: string | null;
   class: string | null;
@@ -148,6 +150,9 @@ export interface ProductSku {
 
 export type AssetType = 
   | 'image' 
+  | 'installed_image'
+  | 'dimensions_image'
+  | 'photometric_image'
   | 'datasheet' 
   | 'photometric' 
   | 'manual' 
@@ -246,10 +251,13 @@ export interface VariantFormData {
   ip_rating: string | null;
   light_source: string | null;
   power_w: number | null;
+  power_w_system: number | null;
   lumens: number | null;
+  lumens_system: number | null;
   cct_min: number | null;
   cct_max: number | null;
   cri: number | null;
+  beam_angle: number | null;
   control_types: string[];
   voltage: string | null;
   class: string | null;

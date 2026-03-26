@@ -7,12 +7,15 @@ import { createClient } from '@/lib/supabase/client';
 import { saveVariantAsset, deleteVariantAsset } from '@/app/(admin)/admin/variants/actions';
 import type { ProductAsset } from '@/lib/types';
 
+const IMAGE_BUCKET_TYPES = new Set(['image', 'installed_image', 'dimensions_image', 'photometric_image']);
+
 const ASSET_TYPES = [
   { value: 'image', label: 'Product Image', icon: ImageIcon, bucket: 'product-images', accept: 'image/*' },
-  { value: 'datasheet', label: 'Technical Datasheet', icon: FileText, bucket: 'documents', accept: '.pdf' },
+  { value: 'installed_image', label: 'Product Installed Image', icon: ImageIcon, bucket: 'product-images', accept: 'image/*' },
+  { value: 'dimensions_image', label: 'Product Dimensions Image', icon: ImageIcon, bucket: 'product-images', accept: 'image/*' },
+  { value: 'photometric_image', label: 'Photometric Curve Image', icon: ImageIcon, bucket: 'product-images', accept: 'image/*' },
   { value: 'photometric', label: 'IES Photometric File', icon: FileSpreadsheet, bucket: 'documents', accept: '.ies,.ldt' },
   { value: 'manual', label: 'Installation Manual', icon: FileText, bucket: 'documents', accept: '.pdf' },
-  { value: 'catalogue', label: 'Catalogue / Brochure', icon: FileText, bucket: 'documents', accept: '.pdf' },
   { value: 'line_drawing', label: 'Line Drawing (DWG/DXF)', icon: FileText, bucket: 'documents', accept: '.dwg,.dxf,.pdf,.svg' },
   { value: 'revit', label: 'Revit / BIM File', icon: Box, bucket: 'documents', accept: '.rfa,.rvt,.ifc' },
   { value: '3d', label: '3D Model (STEP/OBJ)', icon: Box, bucket: 'documents', accept: '.step,.stp,.obj,.fbx,.3ds' },
@@ -78,8 +81,8 @@ export function FileUploadSection({ productId, assets: initialAssets }: Props) {
     try {
       const supabase = createClient();
       if (!supabase) throw new Error('Supabase not configured');
-      const isImage = asset.type === 'image';
-      const bucket = isImage ? 'product-images' : 'documents';
+      const isImageBucket = IMAGE_BUCKET_TYPES.has(asset.type);
+      const bucket = isImageBucket ? 'product-images' : 'documents';
 
       if (asset.file_url && asset.file_url.includes('/storage/v1/object/public/')) {
         const pathParts = asset.file_url.split(`/storage/v1/object/public/${bucket}/`);
@@ -173,7 +176,7 @@ export function FileUploadSection({ productId, assets: initialAssets }: Props) {
                       className="flex items-center justify-between bg-gray-50 px-3 py-2 text-sm"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        {asset.type === 'image' && asset.file_url ? (
+                        {IMAGE_BUCKET_TYPES.has(asset.type) && asset.file_url ? (
                           <img
                             src={asset.file_url}
                             alt={asset.title}

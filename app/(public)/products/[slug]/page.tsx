@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/Button';
 import { ProductGrid } from '@/components/ProductGrid';
 import { VariantsTable } from '@/components/VariantsTable';
 import { ProductTabs } from '@/components/ProductTabs';
+import { FilterDropdown } from '@/components/FilterDropdown';
 import { createClient } from '@/lib/supabase/server';
 import { ProductVariant, ProductAsset, ProductSku } from '@/lib/types';
-import { formatDimensions, formatCCT } from '@/lib/utils';
+import { formatDimensions, formatCCT, formatCRI } from '@/lib/utils';
 import { generateMetadata as genMeta, generateProductSchema } from '@/lib/seo';
 import {
   Download,
@@ -16,8 +17,6 @@ import {
   Shield,
   Zap,
   Lightbulb,
-  Settings,
-  Maximize,
   RotateCw,
   ChevronRight,
   BookOpen,
@@ -28,7 +27,7 @@ import {
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ mounting?: string; ip?: string; control?: string }>;
+  searchParams?: Promise<{ optic?: string; k?: string; cri?: string; control?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -46,20 +45,6 @@ export async function generateMetadata({ params }: PageProps) {
     return genMeta({
       title: product.name,
       description: product.description,
-      path: `/products/${slug}`,
-    });
-  }
-
-  const { data: variant } = await supabase
-    .from('product_variants')
-    .select('name, short_description')
-    .eq('slug', slug)
-    .single();
-
-  if (variant) {
-    return genMeta({
-      title: variant.name,
-      description: variant.short_description,
       path: `/products/${slug}`,
     });
   }
@@ -91,32 +76,15 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
       <ProductView
         product={product}
         variants={(variants as ProductVariant[]) || []}
-        filterMounting={filters.mounting}
-        filterIp={filters.ip}
+        filterOptic={filters.optic}
+        filterK={filters.k}
+        filterCri={filters.cri}
         filterControl={filters.control}
       />
     );
   }
 
-  const { data: variant, error } = await supabase
-    .from('product_variants')
-    .select(`*, category:product_categories(*), product:products(*), skus:product_skus(*), assets:product_assets(*)`)
-    .eq('slug', slug)
-    .single();
-
-  if (error || !variant) {
-    notFound();
-  }
-
-  const { data: relatedVariants } = await supabase
-    .from('product_variants')
-    .select(`*, category:product_categories(*), assets:product_assets(*)`)
-    .eq('category_id', variant.category_id)
-    .eq('is_active', true)
-    .neq('id', variant.id)
-    .limit(4);
-
-  return <VariantView variant={variant} relatedVariants={(relatedVariants as ProductVariant[]) || []} />;
+  notFound();
 }
 
 /* ─── Helpers ───────────────────────────────────────────────────────────────── */
@@ -133,9 +101,14 @@ const CONTROL_LABELS: Record<string, string> = {
   push: 'Push-dim',
 };
 
+const IMAGE_ASSET_TYPES = new Set(['image', 'installed_image', 'dimensions_image', 'photometric_image']);
+
 const ASSET_TYPE_LABELS: Record<string, string> = {
   datasheet: 'Datasheet',
   photometric: 'Photometric Data',
+  photometric_image: 'Photometric Curve',
+  installed_image: 'Installed',
+  dimensions_image: 'Dimensions',
   manual: 'Installation Manual',
   catalogue: 'Catalogue',
   line_drawing: 'Line Drawing',
@@ -155,64 +128,46 @@ const ASSET_TYPE_ICONS: Record<string, typeof FileText> = {
   other: Download,
 };
 
-function buildFilterUrl(
-  base: string,
-  current: { mounting?: string; ip?: string; control?: string },
-  key: 'mounting' | 'ip' | 'control',
-  value: string | null
-) {
-  const next = { ...current, [key]: value || undefined };
-  if (!next.mounting) delete next.mounting;
-  if (!next.ip) delete next.ip;
-  if (!next.control) delete next.control;
-  const q = new URLSearchParams(next as Record<string, string>).toString();
-  return q ? `${base}?${q}` : base;
-}
-
 /* ─── Product view (iGuzzini-style) ────────────────────────────────────────── */
 
 function ProductView({
   product,
   variants,
-  filterMounting,
-  filterIp,
+  filterOptic,
+  filterK,
+  filterCri,
   filterControl,
 }: {
   product: any;
   variants: ProductVariant[];
-  filterMounting?: string;
-  filterIp?: string;
+  filterOptic?: string;
+  filterK?: string;
+  filterCri?: string;
   filterControl?: string;
 }) {
   const baseUrl = `/products/${product.slug}`;
-  const currentFilters = {
-    mounting: filterMounting,
-    ip: filterIp,
-    control: filterControl,
-  };
+  const currentFilters = { optic: filterOptic, k: filterK, cri: filterCri, control: filterControl };
+
+  const getCctLabel = (v: ProductVariant) =>
+    (v.cct_min || v.cct_max) ? formatCCT(v.cct_min, v.cct_max) : null;
+  const getCriLabel = (v: ProductVariant) =>
+    v.cri ? formatCRI(v.cri) : null;
+
+  const getBeamLabel = (v: ProductVariant) =>
+    v.beam_angle ? `${v.beam_angle}°` : null;
 
   const filtered = variants.filter((v) => {
-    if (filterMounting && v.mounting_type !== filterMounting) return false;
-    if (filterIp && v.ip_rating !== filterIp) return false;
-    if (filterControl && !(v.control_types && v.control_types.includes(filterControl)))
-      return false;
+    if (filterOptic && getBeamLabel(v) !== filterOptic) return false;
+    if (filterK && getCctLabel(v) !== filterK) return false;
+    if (filterCri && getCriLabel(v) !== filterCri) return false;
+    if (filterControl && !(v.control_types && v.control_types.includes(filterControl))) return false;
     return true;
   });
 
-  const uniqueMounting = [
-    ...new Set(variants.map((v) => v.mounting_type).filter(Boolean)),
-  ] as string[];
-  const uniqueIp = [
-    ...new Set(variants.map((v) => v.ip_rating).filter(Boolean)),
-  ] as string[];
-  const uniqueControl = [
-    ...new Set(variants.flatMap((v) => v.control_types || [])),
-  ]
-    .filter(Boolean)
-    .sort();
-  const uniqueClasses = [
-    ...new Set(variants.map((v) => v.class).filter(Boolean)),
-  ] as string[];
+  const uniqueOptic = [...new Set(variants.map((v) => getBeamLabel(v)).filter(Boolean))] as string[];
+  const uniqueK = [...new Set(variants.map((v) => getCctLabel(v)).filter(Boolean))] as string[];
+  const uniqueCri = [...new Set(variants.map((v) => getCriLabel(v)).filter(Boolean))] as string[];
+  const uniqueControl = [...new Set(variants.flatMap((v) => v.control_types || []))].filter(Boolean).sort();
 
   const categoryName = product.category?.name || null;
 
@@ -228,12 +183,6 @@ function ProductView({
           <Link href="/products" className="hover:text-gray-900 transition-colors flex-shrink-0">
             Products
           </Link>
-          {categoryName && (
-            <>
-              <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
-              <span className="text-gray-400 flex-shrink-0">{categoryName}</span>
-            </>
-          )}
           <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
           <span className="text-gray-900 flex-shrink-0">{product.name}</span>
         </nav>
@@ -281,54 +230,25 @@ function ProductView({
               </div>
             )}
 
-            {/* Protection Ratings */}
-            {(uniqueIp.length > 0 || uniqueClasses.length > 0) && (
-              <div className="mb-6">
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
-                  Protection Ratings
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {uniqueClasses.map((cls) => (
-                    <div
-                      key={cls}
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-100"
-                    >
-                      <Shield className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">{cls}</span>
-                    </div>
-                  ))}
-                  {uniqueIp.map((ip) => (
-                    <div
-                      key={ip}
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-100"
-                    >
-                      <Shield className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">{ip}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Key Features */}
-            {(uniqueMounting.length > 0 || uniqueControl.length > 0) && (
+            {/* Product details */}
+            {(categoryName || product.environment) && (
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
-                  Key Features
+                  Specifications
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {uniqueMounting.map((m) => (
-                    <div key={m} className="flex items-center gap-2 text-sm text-gray-600">
-                      <Maximize className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                      <span className="capitalize">{m} mounting</span>
+                <div className="flex flex-wrap gap-3">
+                  {categoryName && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-100">
+                      <Lightbulb className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-700">{categoryName}</span>
                     </div>
-                  ))}
-                  {uniqueControl.map((c) => (
-                    <div key={c} className="flex items-center gap-2 text-sm text-gray-600">
-                      <Settings className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                      <span>{CONTROL_LABELS[c] || c}</span>
+                  )}
+                  {product.environment && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-100">
+                      <Shield className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-700 capitalize">{product.environment}</span>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
@@ -344,40 +264,48 @@ function ProductView({
             </span>
           </div>
 
-          {/* Filters */}
-          {variants.length > 0 &&
-            (uniqueMounting.length > 0 || uniqueIp.length > 0 || uniqueControl.length > 0) && (
-              <div className="mb-6 flex flex-wrap items-center gap-4 sm:gap-6 pb-6 border-b border-gray-200 overflow-x-auto">
-                {uniqueMounting.length > 0 && (
-                  <FilterGroup
-                    label="Mounting"
-                    options={uniqueMounting}
-                    current={currentFilters.mounting}
-                    buildUrl={(val) => buildFilterUrl(baseUrl, currentFilters, 'mounting', val)}
-                  />
-                )}
-                {uniqueIp.length > 0 && (
-                  <FilterGroup
-                    label="IP"
-                    options={uniqueIp}
-                    current={currentFilters.ip}
-                    buildUrl={(val) => buildFilterUrl(baseUrl, currentFilters, 'ip', val)}
-                  />
-                )}
-                {uniqueControl.length > 0 && (
-                  <FilterGroup
-                    label="Control"
-                    options={uniqueControl}
-                    current={currentFilters.control}
-                    buildUrl={(val) => buildFilterUrl(baseUrl, currentFilters, 'control', val)}
-                    labels={CONTROL_LABELS}
-                  />
-                )}
-              </div>
-            )}
+          {/* Filters — always visible */}
+          <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg px-6 py-5">
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm text-gray-500 mr-2">Filter codes by:</span>
+              <FilterDropdown
+                label="Optic"
+                options={uniqueOptic}
+                current={currentFilters.optic}
+                baseUrl={baseUrl}
+                filterKey="optic"
+                allFilters={currentFilters}
+              />
+              <FilterDropdown
+                label="K"
+                options={uniqueK}
+                current={currentFilters.k}
+                baseUrl={baseUrl}
+                filterKey="k"
+                allFilters={currentFilters}
+              />
+              <FilterDropdown
+                label="CRI"
+                options={uniqueCri}
+                current={currentFilters.cri}
+                baseUrl={baseUrl}
+                filterKey="cri"
+                allFilters={currentFilters}
+              />
+              <FilterDropdown
+                label="Control"
+                options={uniqueControl.map((c) => CONTROL_LABELS[c] || c)}
+                values={uniqueControl}
+                current={currentFilters.control}
+                baseUrl={baseUrl}
+                filterKey="control"
+                allFilters={currentFilters}
+              />
+            </div>
+          </div>
 
           {filtered.length > 0 ? (
-            <VariantsTable variants={filtered} />
+            <VariantsTable variants={filtered} productSlug={product.slug} />
           ) : (
             <div className="text-center py-12 border border-gray-200">
               <p className="text-gray-500">
@@ -393,52 +321,10 @@ function ProductView({
   );
 }
 
-function FilterGroup({
-  label,
-  options,
-  current,
-  buildUrl,
-  labels,
-}: {
-  label: string;
-  options: string[];
-  current?: string;
-  buildUrl: (value: string | null) => string;
-  labels?: Record<string, string>;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-      <span className="text-xs text-gray-500 uppercase tracking-wide whitespace-nowrap">{label}</span>
-      <Link
-        href={buildUrl(null)}
-        className={`px-3 py-1.5 text-xs border transition-colors ${
-          !current
-            ? 'bg-gray-900 text-white border-gray-900'
-            : 'border-gray-300 text-gray-600 hover:border-gray-900'
-        }`}
-      >
-        All
-      </Link>
-      {options.map((opt) => (
-        <Link
-          key={opt}
-          href={buildUrl(opt)}
-          className={`px-3 py-1.5 text-xs border transition-colors ${
-            current === opt
-              ? 'bg-gray-900 text-white border-gray-900'
-              : 'border-gray-300 text-gray-600 hover:border-gray-900'
-          }`}
-        >
-          {labels?.[opt] || opt}
-        </Link>
-      ))}
-    </div>
-  );
-}
 
-/* ─── Variant detail view (iGuzzini-style with tabs) ──────────────────────── */
+/* ─── Variant detail view — web datasheet ─────────────────────────────────── */
 
-function VariantView({
+export function VariantView({
   variant,
   relatedVariants,
 }: {
@@ -447,10 +333,15 @@ function VariantView({
 }) {
   const images =
     variant.assets?.filter((a: ProductAsset) => a.type === 'image') || [];
+  const installedImages =
+    variant.assets?.filter((a: ProductAsset) => a.type === 'installed_image') || [];
+  const dimensionsImages =
+    variant.assets?.filter((a: ProductAsset) => a.type === 'dimensions_image') || [];
+  const photometricImages =
+    variant.assets?.filter((a: ProductAsset) => a.type === 'photometric_image') || [];
   const documents =
-    variant.assets?.filter((a: ProductAsset) => a.type !== 'image') || [];
+    variant.assets?.filter((a: ProductAsset) => !IMAGE_ASSET_TYPES.has(a.type)) || [];
   const mainImage = images[0]?.file_url || '/images/placeholder-product.jpg';
-  const skus: ProductSku[] = variant.skus || [];
 
   const documentsByType = documents.reduce(
     (acc: Record<string, ProductAsset[]>, doc: ProductAsset) => {
@@ -462,111 +353,94 @@ function VariantView({
     {} as Record<string, ProductAsset[]>
   );
 
-  const overviewContent = (
-    <div className="space-y-8">
-      {/* Description as bullet points */}
-      {variant.long_description && (
-        <div className="space-y-2 max-w-3xl">
-          {variant.long_description
-            .split('\n')
-            .filter((line: string) => line.trim())
-            .map((line: string, i: number) => (
-              <div key={i} className="flex gap-3 text-sm text-gray-600 leading-relaxed">
-                <span className="text-gray-300 mt-0.5 flex-shrink-0">•</span>
-                <span>{line.trim()}</span>
-              </div>
-            ))}
-        </div>
-      )}
+  const productName = variant.product?.name || '';
+  const categoryName = variant.category?.name || '';
+  const efficacySrc = variant.efficacy_lm_per_w ? `${variant.efficacy_lm_per_w} lm/W` : null;
+  const efficacySys = variant.lumens_system && variant.power_w_system
+    ? `${(variant.lumens_system / variant.power_w_system).toFixed(1)} lm/W`
+    : null;
 
-      {/* Key specs grid */}
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">
-          Key Specifications
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {variant.power_w && (
-            <SpecCard icon={Zap} label="Power" value={`${variant.power_w}W`} />
-          )}
-          {variant.lumens && (
-            <SpecCard icon={Lightbulb} label="Luminous Flux" value={`${variant.lumens}lm`} />
-          )}
-          {variant.efficacy_lm_per_w && (
-            <SpecCard icon={Zap} label="Efficacy" value={`${variant.efficacy_lm_per_w}lm/W`} />
-          )}
-          {(variant.cct_min || variant.cct_max) && (
-            <SpecCard
-              icon={Lightbulb}
-              label="Color Temperature"
-              value={formatCCT(variant.cct_min, variant.cct_max)}
-            />
-          )}
-          {variant.cri && (
-            <SpecCard icon={Lightbulb} label="CRI" value={`≥${variant.cri}`} />
-          )}
-          {variant.voltage && (
-            <SpecCard icon={Zap} label="Voltage" value={variant.voltage} />
-          )}
-          {variant.ip_rating && (
-            <SpecCard icon={Shield} label="IP Rating" value={variant.ip_rating} />
-          )}
-          {variant.dimensions && (
-            <SpecCard
-              icon={Maximize}
-              label="Dimensions"
-              value={formatDimensions(variant.dimensions)}
-            />
-          )}
+  /* ── Tab 1: Technical Specs ─────────────────────────────────────────────── */
+  const specsContent = (
+    <div className="space-y-10">
+      {/* Two-column: specs table + photometric image */}
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 border border-gray-200 overflow-x-auto">
+          <table className="w-full min-w-[380px]">
+            <tbody>
+              <SpecRow label="Mounting Type" value={variant.mounting_type} />
+              <SpecRow label="Beam Angle" value={variant.beam_angle ? `${variant.beam_angle}°` : null} />
+              <SpecRow label="Light Source" value={variant.light_source} />
+              <SpecRow label="Power Source" value={variant.power_w ? `${variant.power_w}W` : null} />
+              <SpecRow label="Power System" value={variant.power_w_system ? `${variant.power_w_system}W` : null} />
+              <SpecRow label="Lumens Source" value={variant.lumens ? `${variant.lumens}lm` : null} />
+              <SpecRow label="Lumens System" value={variant.lumens_system ? `${variant.lumens_system}lm` : null} />
+              <SpecRow label="Efficacy Source" value={efficacySrc} />
+              <SpecRow label="Efficacy System" value={efficacySys} />
+              <SpecRow
+                label="Color Temperature"
+                value={variant.cct_min || variant.cct_max ? formatCCT(variant.cct_min, variant.cct_max) : null}
+              />
+              <SpecRow label="CRI" value={formatCRI(variant.cri)} />
+              <SpecRow
+                label="Control"
+                value={
+                  variant.control_types && variant.control_types.length > 0
+                    ? variant.control_types.map((ct: string) => CONTROL_LABELS[ct] || ct).join(', ')
+                    : null
+                }
+              />
+              <SpecRow label="Voltage" value={variant.voltage} />
+              <SpecRow label="IP Rating" value={variant.ip_rating} />
+              <SpecRow label="Electrical Class" value={variant.class} />
+              <SpecRow label="Material" value={variant.material} />
+              <SpecRow label="Finish" value={variant.finish} />
+              <SpecRow label="Dimensions" value={variant.dimensions ? formatDimensions(variant.dimensions) : null} />
+            </tbody>
+          </table>
         </div>
+
+        {(photometricImages.length > 0 || dimensionsImages.length > 0) && (
+          <div className="space-y-6">
+            {photometricImages.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                  Photometric Distribution
+                </h4>
+                {photometricImages.map((img: ProductAsset) => (
+                  <div key={img.id} className="border border-gray-200 bg-white p-4">
+                    <img
+                      src={img.file_url}
+                      alt={img.title || 'Photometric distribution'}
+                      className="w-full h-auto"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            {dimensionsImages.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                  Dimensions
+                </h4>
+                {dimensionsImages.map((img: ProductAsset) => (
+                  <div key={img.id} className="border border-gray-200 bg-white p-4">
+                    <img
+                      src={img.file_url}
+                      alt={img.title || 'Product dimensions'}
+                      className="w-full h-auto"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 
-  const specsContent = (
-    <div className="border border-gray-200 overflow-x-auto">
-      <table className="w-full min-w-[400px]">
-        <tbody>
-          <SpecRow label="Mounting Type" value={variant.mounting_type} />
-          <SpecRow label="Light Source" value={variant.light_source} />
-          <SpecRow label="Power" value={variant.power_w ? `${variant.power_w}W` : null} />
-          <SpecRow label="Luminous Flux" value={variant.lumens ? `${variant.lumens}lm` : null} />
-          <SpecRow
-            label="Efficacy"
-            value={variant.efficacy_lm_per_w ? `${variant.efficacy_lm_per_w}lm/W` : null}
-          />
-          <SpecRow
-            label="Color Temperature"
-            value={
-              variant.cct_min || variant.cct_max
-                ? formatCCT(variant.cct_min, variant.cct_max)
-                : null
-            }
-          />
-          <SpecRow label="CRI" value={variant.cri ? `≥${variant.cri}` : null} />
-          <SpecRow
-            label="Control"
-            value={
-              variant.control_types && variant.control_types.length > 0
-                ? variant.control_types
-                    .map((ct: string) => CONTROL_LABELS[ct] || ct)
-                    .join(', ')
-                : null
-            }
-          />
-          <SpecRow label="Voltage" value={variant.voltage} />
-          <SpecRow label="IP Rating" value={variant.ip_rating} />
-          <SpecRow label="Electrical Class" value={variant.class} />
-          <SpecRow label="Material" value={variant.material} />
-          <SpecRow label="Finish" value={variant.finish} />
-          <SpecRow
-            label="Dimensions"
-            value={variant.dimensions ? formatDimensions(variant.dimensions) : null}
-          />
-        </tbody>
-      </table>
-    </div>
-  );
-
+  /* ── Tab 2: Downloads ───────────────────────────────────────────────────── */
   const downloadsContent =
     documents.length > 0 ? (
       <div className="space-y-8">
@@ -606,10 +480,15 @@ function VariantView({
     ) : null;
 
   const tabs = [
-    { id: 'overview', label: 'Overview', content: overviewContent },
     { id: 'specs', label: 'Technical Specs', content: specsContent },
-    { id: 'downloads', label: 'Downloads', content: downloadsContent },
-  ].filter((t) => t.content !== null);
+    {
+      id: 'downloads',
+      label: 'Downloads',
+      content: downloadsContent || (
+        <p className="text-sm text-gray-500 py-8 text-center">No files available for download yet.</p>
+      ),
+    },
+  ];
 
   return (
     <div className="py-8 lg:py-12">
@@ -635,27 +514,27 @@ function VariantView({
             </>
           )}
           <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
-          <span className="text-gray-900 flex-shrink-0">{variant.name}</span>
+          <span className="text-gray-900 flex-shrink-0">{variant.code}</span>
         </nav>
 
-        {/* Hero: image + info */}
+        {/* ── Datasheet header ─────────────────────────────────────────────── */}
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 mb-12">
-          {/* Images */}
+          {/* Product images */}
           <div className="space-y-3">
-            <div className="aspect-square bg-gray-100 relative overflow-hidden">
+            <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
               <Image
                 src={mainImage}
-                alt={variant.name}
+                alt={variant.code}
                 fill
                 className="object-cover"
                 priority
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
-            {images.length > 1 && (
+            {(images.length > 1 || installedImages.length > 0) && (
               <div className="grid grid-cols-4 gap-3">
-                {images.slice(0, 4).map((image: ProductAsset) => (
-                  <div key={image.id} className="aspect-square bg-gray-100 relative overflow-hidden">
+                {[...images.slice(1), ...installedImages].slice(0, 4).map((image: ProductAsset) => (
+                  <div key={image.id} className="aspect-square bg-gray-100 relative overflow-hidden border border-gray-200">
                     <Image
                       src={image.file_url}
                       alt={image.title}
@@ -669,146 +548,125 @@ function VariantView({
             )}
           </div>
 
-          {/* Info */}
-          <div className="flex flex-col justify-center space-y-5">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">
-                {variant.code}
-              </p>
-              <h1 className="text-3xl lg:text-4xl font-light tracking-wide mb-3">
-                {variant.name}
-              </h1>
-              <p className="text-gray-600 leading-relaxed">
-                {variant.short_description}
-              </p>
-            </div>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {variant.category && (
-                <span className="px-3 py-1 text-xs uppercase tracking-wide border border-gray-200 bg-gray-50 text-gray-700">
-                  {variant.category.name}
+          {/* Info panel */}
+          <div className="flex flex-col justify-center">
+            {/* Product family + category */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {productName && (
+                <Link
+                  href={`/products/${variant.product?.slug}`}
+                  className="text-xs uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {productName}
+                </Link>
+              )}
+              {productName && categoryName && (
+                <span className="text-gray-300">·</span>
+              )}
+              {categoryName && (
+                <span className="text-xs uppercase tracking-widest text-gray-400">
+                  {categoryName}
                 </span>
               )}
+            </div>
+
+            {/* Code as main title */}
+            <h1 className="text-3xl lg:text-4xl font-light tracking-widest uppercase mb-6">
+              {variant.code}
+            </h1>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mb-6">
               {variant.ip_rating && (
-                <span className="px-3 py-1 text-xs uppercase tracking-wide border border-gray-200 bg-gray-50 text-gray-700">
+                <span className="px-3 py-1.5 text-xs uppercase tracking-wide border border-gray-200 bg-gray-50 text-gray-700 font-medium">
                   {variant.ip_rating}
                 </span>
               )}
               {variant.class && (
-                <span className="px-3 py-1 text-xs uppercase tracking-wide border border-gray-200 bg-gray-50 text-gray-700">
+                <span className="px-3 py-1.5 text-xs uppercase tracking-wide border border-gray-200 bg-gray-50 text-gray-700 font-medium">
                   {variant.class}
+                </span>
+              )}
+              {variant.mounting_type && (
+                <span className="px-3 py-1.5 text-xs uppercase tracking-wide border border-gray-200 bg-gray-50 text-gray-700 font-medium capitalize">
+                  {variant.mounting_type}
+                </span>
+              )}
+              {variant.voltage && (
+                <span className="px-3 py-1.5 text-xs uppercase tracking-wide border border-gray-200 bg-gray-50 text-gray-700 font-medium">
+                  {variant.voltage}
                 </span>
               )}
             </div>
 
-            {/* Quick specs */}
-            <div className="border-t border-gray-200 pt-5">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
-                {variant.power_w && (
-                  <>
-                    <span className="text-gray-500">Power</span>
-                    <span className="font-medium">{variant.power_w}W</span>
-                  </>
-                )}
-                {variant.lumens && (
-                  <>
-                    <span className="text-gray-500">Luminous Flux</span>
-                    <span className="font-medium">{variant.lumens}lm</span>
-                  </>
-                )}
-                {(variant.cct_min || variant.cct_max) && (
-                  <>
-                    <span className="text-gray-500">CCT</span>
-                    <span className="font-medium">
-                      {formatCCT(variant.cct_min, variant.cct_max)}
-                    </span>
-                  </>
-                )}
-                {variant.control_types && variant.control_types.length > 0 && (
-                  <>
-                    <span className="text-gray-500">Control</span>
-                    <span className="font-medium">
-                      {variant.control_types
-                        .map((ct: string) => CONTROL_LABELS[ct] || ct)
-                        .join(', ')}
-                    </span>
-                  </>
-                )}
-              </div>
+            {/* Key specs summary — datasheet style */}
+            <div className="border border-gray-200 divide-y divide-gray-100">
+              {(variant.power_w_system || variant.power_w) && (
+                <div className="flex justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">Power</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {[variant.power_w && `${variant.power_w}W (src)`, variant.power_w_system && `${variant.power_w_system}W (sys)`].filter(Boolean).join(' / ')}
+                  </span>
+                </div>
+              )}
+              {(variant.lumens_system || variant.lumens) && (
+                <div className="flex justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">Lumens</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {[variant.lumens && `${variant.lumens}lm (src)`, variant.lumens_system && `${variant.lumens_system}lm (sys)`].filter(Boolean).join(' / ')}
+                  </span>
+                </div>
+              )}
+              {(efficacySrc || efficacySys) && (
+                <div className="flex justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">Efficacy</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {[efficacySrc && `${efficacySrc} (src)`, efficacySys && `${efficacySys} (sys)`].filter(Boolean).join(' / ')}
+                  </span>
+                </div>
+              )}
+              {(variant.cct_min || variant.cct_max) && (
+                <div className="flex justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">CCT</span>
+                  <span className="text-sm font-medium text-gray-900">{formatCCT(variant.cct_min, variant.cct_max)}</span>
+                </div>
+              )}
+              {variant.cri && (
+                <div className="flex justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">CRI</span>
+                  <span className="text-sm font-medium text-gray-900">{formatCRI(variant.cri)}</span>
+                </div>
+              )}
+              {variant.beam_angle && (
+                <div className="flex justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">Beam Angle</span>
+                  <span className="text-sm font-medium text-gray-900">{variant.beam_angle}°</span>
+                </div>
+              )}
+              {variant.control_types && variant.control_types.length > 0 && (
+                <div className="flex justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">Control</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {variant.control_types.map((ct: string) => CONTROL_LABELS[ct] || ct).join(', ')}
+                  </span>
+                </div>
+              )}
+              {variant.dimensions && (
+                <div className="flex justify-between px-5 py-3">
+                  <span className="text-sm text-gray-500">Dimensions</span>
+                  <span className="text-sm font-medium text-gray-900">{formatDimensions(variant.dimensions)}</span>
+                </div>
+              )}
             </div>
 
-            <div className="pt-2">
-              <Link href="/contact">
-                <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                  Request Quote
-                </Button>
-              </Link>
-            </div>
           </div>
         </div>
 
-        {/* Tabs: Overview / Technical Specs / Downloads */}
+        {/* ── Tabs: Technical Specs / Downloads ────────────────────────────── */}
         {tabs.length > 0 && (
           <div className="mb-16">
             <ProductTabs tabs={tabs} />
           </div>
-        )}
-
-        {/* SKUs table */}
-        {skus.length > 0 && (
-          <section className="mb-16">
-            <h2 className="text-2xl font-light tracking-wide uppercase mb-6">
-              Product Codes
-            </h2>
-            <div className="border border-gray-200 overflow-x-auto">
-              <table className="w-full min-w-[500px]">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Code
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Name
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Finish
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      CCT
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Lumens
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {skus.map((sku, i) => (
-                    <tr
-                      key={sku.id}
-                      className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}
-                    >
-                      <td className="px-5 py-3.5 text-sm font-medium text-gray-900">
-                        {sku.code}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-700">
-                        {sku.name}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">
-                        {sku.finish || '—'}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">
-                        {sku.cct ? `${sku.cct}K` : '—'}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">
-                        {sku.lumens ? `${sku.lumens}lm` : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
         )}
 
         {/* Related products */}
@@ -826,8 +684,8 @@ function VariantView({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(
               generateProductSchema({
-                name: variant.name,
-                description: variant.short_description,
+                name: variant.code,
+                description: `${variant.code} - ${productName}`,
                 code: variant.code,
               })
             ),

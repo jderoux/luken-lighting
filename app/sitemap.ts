@@ -38,11 +38,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Product variants
   const { data: variants } = await supabase
     .from('product_variants')
-    .select('slug, updated_at')
+    .select('slug, updated_at, product:products!inner(slug)')
     .eq('is_active', true);
 
-  const variantPages = (variants || []).map((variant) => ({
-    url: `${baseUrl}/products/${variant.slug}`,
+  const variantPages = (variants || []).map((variant: any) => ({
+    url: `${baseUrl}/products/${variant.product.slug}/${variant.slug}`,
     lastModified: new Date(variant.updated_at),
     changeFrequency: 'monthly' as const,
     priority: 0.7,

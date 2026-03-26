@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { updateProduct } from '@/app/(admin)/admin/products/actions';
 import { createClient } from '@/lib/supabase/client';
+import { slugify } from '@/lib/utils';
 import type { Product, ProductCategory } from '@/lib/types';
 
 interface Props {
@@ -157,7 +158,6 @@ function ImageUploadSlot({
 
 export function ProductEditForm({ product, categories }: Props) {
   const [name, setName] = useState(product.name);
-  const [slug, setSlug] = useState(product.slug);
   const [description, setDescription] = useState(product.description || '');
   const [categoryId, setCategoryId] = useState(product.category_id || '');
   const [environment, setEnvironment] = useState(product.environment || '');
@@ -174,7 +174,7 @@ export function ProductEditForm({ product, categories }: Props) {
 
     const formData = new FormData();
     formData.set('name', name.trim());
-    formData.set('slug', slug.trim());
+    formData.set('slug', slugify(name.trim()));
     formData.set('description', description.trim());
     formData.set('category_id', categoryId || '');
     formData.set('environment', environment || '');
@@ -225,17 +225,6 @@ export function ProductEditForm({ product, categories }: Props) {
             name="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            required
-            className="w-full"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-          <Input
-            name="slug"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
             required
             className="w-full"
           />

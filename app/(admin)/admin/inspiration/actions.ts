@@ -202,22 +202,22 @@ export async function deleteProjectImage(imageId: string) {
 
 // --- Product linking actions ---
 
-export async function linkProduct(projectId: string, variantId: string) {
+export async function linkProduct(projectId: string, productId: string) {
   const supabase = await createClient();
   if (!supabase) return { error: 'Supabase not configured' };
 
   const { data: existing } = await supabase
     .from('project_products')
-    .select('variant_id')
+    .select('product_id')
     .eq('project_id', projectId)
-    .eq('variant_id', variantId)
+    .eq('product_id', productId)
     .single();
 
-  if (existing) return { error: 'Variant already linked' };
+  if (existing) return { error: 'Product already linked' };
 
   const { error } = await supabase
     .from('project_products')
-    .insert({ project_id: projectId, variant_id: variantId });
+    .insert({ project_id: projectId, product_id: productId });
 
   if (error) return { error: error.message };
 
@@ -225,7 +225,7 @@ export async function linkProduct(projectId: string, variantId: string) {
   return { success: true };
 }
 
-export async function unlinkProduct(projectId: string, variantId: string) {
+export async function unlinkProduct(projectId: string, productId: string) {
   const supabase = await createClient();
   if (!supabase) return { error: 'Supabase not configured' };
 
@@ -233,7 +233,7 @@ export async function unlinkProduct(projectId: string, variantId: string) {
     .from('project_products')
     .delete()
     .eq('project_id', projectId)
-    .eq('variant_id', variantId);
+    .eq('product_id', productId);
 
   if (error) return { error: error.message };
 

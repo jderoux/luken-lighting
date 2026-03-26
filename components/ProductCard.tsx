@@ -55,11 +55,11 @@ export function ProductCard({ product }: ProductCardProps) {
             {(product.cct_min || product.cct_max) && (
               <span>{formatCCT(product.cct_min, product.cct_max)}</span>
             )}
-            {product.power_w && (
-              <span>{product.power_w}W</span>
+            {(product.power_w_system || product.power_w) && (
+              <span>{product.power_w_system ?? product.power_w}W</span>
             )}
-            {product.lumens && (
-              <span>{product.lumens}lm</span>
+            {(product.lumens_system || product.lumens) && (
+              <span>{product.lumens_system ?? product.lumens}lm</span>
             )}
           </div>
         </div>

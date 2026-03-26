@@ -26,7 +26,7 @@ interface VariantRow {
   is_active: boolean;
   is_featured: boolean;
   category?: { id: string; name: string } | null;
-  product?: { id: string; name: string } | null;
+  product?: { id: string; name: string; slug: string } | null;
   assets?: AssetSlim[];
 }
 
@@ -159,7 +159,7 @@ export function AdminVariantsTable({ variants, categories, products }: Props) {
                       )}
                     </td>
                     <td className="px-3 py-1.5">
-                      <p className="text-xs font-medium text-gray-900 leading-tight">{variant.name}</p>
+                      <p className="text-xs font-medium text-gray-900 leading-tight">{variant.code}</p>
                       <p className="text-[10px] text-gray-400">{variant.category?.name || ''}</p>
                     </td>
                     <td className="px-3 py-1.5 text-xs text-gray-600 font-mono">{variant.code}</td>
@@ -188,13 +188,13 @@ export function AdminVariantsTable({ variants, categories, products }: Props) {
                     </td>
                     <td className="px-3 py-1.5">
                       <div className="flex items-center justify-end gap-1">
-                        <Link href={`/products/${variant.slug}`} target="_blank" className="p-1 text-gray-400 hover:text-gray-700" title="View on site">
+                        <Link href={variant.product?.slug ? `/products/${variant.product.slug}/${variant.slug}` : '#'} target="_blank" className="p-1 text-gray-400 hover:text-gray-700" title="View on site">
                           <Eye className="w-3.5 h-3.5" />
                         </Link>
                         <Link href={`/admin/variants/${variant.id}`} className="p-1 text-gray-400 hover:text-gray-700" title="Edit">
                           <Edit className="w-3.5 h-3.5" />
                         </Link>
-                        <DeleteVariantButton variantId={variant.id} variantName={variant.name} />
+                        <DeleteVariantButton variantId={variant.id} variantName={variant.code} />
                       </div>
                     </td>
                   </tr>

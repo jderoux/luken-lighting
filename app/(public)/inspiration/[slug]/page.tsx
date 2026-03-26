@@ -1,9 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
-import { ProductGrid } from '@/components/ProductGrid';
 import { createClient } from '@/lib/supabase/server';
-import { ProductVariant } from '@/lib/types';
+import { Product } from '@/lib/types';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 interface ProjectPageProps {
@@ -56,15 +55,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const [{ data: projectProducts }, { data: galleryImages }] = await Promise.all([
     supabase
       .from('project_products')
-      .select(`
-        variant:product_variants(
-          *,
-          category:product_categories(*),
-          product:products(*),
-          assets:product_assets(*)
-        )
-      `)
-      .eq('project_id', project.id),
+      .select('product:products(*)')
+      .eq('project_id', project.id)
+      .not('product_id', 'is', null),
     supabase
       .from('project_images')
       .select('*')
@@ -72,9 +65,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       .order('sort_order'),
   ]);
 
-  const variants = (projectProducts || [])
-    .map((pp: any) => pp.variant)
-    .filter((v: any) => v && v.is_active) as ProductVariant[];
+  const linkedProducts = (projectProducts || [])
+    .map((pp: any) => pp.product)
+    .filter(Boolean) as Product[];
 
   const metadata = [
     { label: 'Location', value: project.location },
@@ -169,8 +162,33 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             Products Used
           </h2>
           
-          {variants.length > 0 ? (
-            <ProductGrid products={variants as ProductVariant[]} />
+          {linkedProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12">
+              {linkedProducts.map((product: Product) => (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.slug}`}
+                  className="group block"
+                >
+                  <div className="space-y-3">
+                    <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                      {(product.thumbnail_url || product.hero_image_url) ? (
+                        <img
+                          src={product.thumbnail_url || product.hero_image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-100 group-hover:scale-105 transition-transform duration-500" />
+                      )}
+                    </div>
+                    <h3 className="text-base font-medium text-gray-900 group-hover:text-brand-copper transition-colors">
+                      {product.name}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
           ) : (
             <div className="text-center py-16">
               <p className="text-gray-500">No products linked to this project yet.</p>

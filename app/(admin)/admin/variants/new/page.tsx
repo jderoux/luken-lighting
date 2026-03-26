@@ -42,8 +42,8 @@ export default function NewVariantPage() {
     setError('');
 
     const formData = new FormData(e.currentTarget);
-    const name = formData.get('name') as string;
-    const slug = slugify(name);
+    const code = formData.get('code') as string;
+    const slug = slugify(code);
 
     const effectiveCategoryId = selectedProductId
       ? (selectedProduct?.category_id ?? categoryId) || null
@@ -59,11 +59,9 @@ export default function NewVariantPage() {
       const { error: insertError, data } = await supabase
         .from('product_variants')
         .insert({
-          name,
-          code: formData.get('code') as string,
+          name: code,
+          code,
           slug,
-          short_description: formData.get('short_description') as string,
-          long_description: formData.get('long_description') as string || '',
           category_id: effectiveCategoryId,
           environment: effectiveEnvironment,
           product_id: selectedProductId || null,
@@ -113,35 +111,9 @@ export default function NewVariantPage() {
               Basic Information
             </h2>
 
-            <Input label="Variant Name" name="name" type="text" required placeholder="e.g., Aria Downlight Fixed" />
             <Input label="Code / SKU" name="code" type="text" required placeholder="e.g., AR-DL-FX-001" />
 
-            <div className="space-y-2">
-              <label htmlFor="short_description" className="block text-sm font-medium text-gray-700">
-                Short Description
-              </label>
-              <textarea
-                id="short_description"
-                name="short_description"
-                rows={3}
-                required
-                placeholder="Brief description (shown in listings)"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 text-gray-900"
-              />
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="long_description" className="block text-sm font-medium text-gray-700">
-                Long Description
-              </label>
-              <textarea
-                id="long_description"
-                name="long_description"
-                rows={6}
-                placeholder="Detailed description (shown on detail page)"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 text-gray-900"
-              />
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
@@ -160,15 +132,21 @@ export default function NewVariantPage() {
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Category</label>
                 <select
-                  value={categoryId}
+                  value={selectedProductId ? selectedProduct?.category_id || '' : categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 bg-white"
+                  disabled={Boolean(selectedProductId)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-500"
                 >
                   <option value="">— None —</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+                {selectedProductId && (
+                  <p className="text-xs text-gray-500">
+                    Inherited from the selected product.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -214,10 +192,6 @@ export default function NewVariantPage() {
             <div className="flex items-center gap-2">
               <input type="checkbox" id="is_active" name="is_active" defaultChecked className="w-4 h-4" />
               <label htmlFor="is_active" className="text-sm font-medium text-gray-700">Active (visible on public site)</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="is_featured" name="is_featured" className="w-4 h-4" />
-              <label htmlFor="is_featured" className="text-sm font-medium text-gray-700">Featured (shown on homepage)</label>
             </div>
           </div>
 

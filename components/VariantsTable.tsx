@@ -5,6 +5,7 @@ import { ExternalLink } from 'lucide-react';
 
 interface VariantsTableProps {
   variants: ProductVariant[];
+  productSlug?: string;
 }
 
 const CONTROL_LABELS: Record<string, string> = {
@@ -19,7 +20,7 @@ const CONTROL_LABELS: Record<string, string> = {
   push: 'Push-dim',
 };
 
-export function VariantsTable({ variants }: VariantsTableProps) {
+export function VariantsTable({ variants, productSlug }: VariantsTableProps) {
   if (variants.length === 0) {
     return (
       <div className="text-center py-12">
@@ -37,9 +38,6 @@ export function VariantsTable({ variants }: VariantsTableProps) {
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Code
-              </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Name
               </th>
               <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Power
@@ -69,25 +67,18 @@ export function VariantsTable({ variants }: VariantsTableProps) {
               >
                 <td className="px-5 py-3.5">
                   <Link
-                    href={`/products/${v.slug}`}
+                    href={`/products/${productSlug || (v as any).product?.slug}/${v.slug}`}
+                    target="_blank"
                     className="text-sm font-medium text-gray-900 hover:text-brand-copper transition-colors"
                   >
                     {v.code || '—'}
                   </Link>
                 </td>
-                <td className="px-5 py-3.5">
-                  <Link
-                    href={`/products/${v.slug}`}
-                    className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
-                  >
-                    {v.name}
-                  </Link>
+                <td className="px-5 py-3.5 text-sm text-gray-600">
+                  {(v.power_w_system || v.power_w) ? `${v.power_w_system ?? v.power_w}W` : '—'}
                 </td>
                 <td className="px-5 py-3.5 text-sm text-gray-600">
-                  {v.power_w ? `${v.power_w}W` : '—'}
-                </td>
-                <td className="px-5 py-3.5 text-sm text-gray-600">
-                  {v.lumens ? `${v.lumens}lm` : '—'}
+                  {(v.lumens_system || v.lumens) ? `${v.lumens_system ?? v.lumens}lm` : '—'}
                 </td>
                 <td className="px-5 py-3.5 text-sm text-gray-600">
                   {(v.cct_min || v.cct_max) ? formatCCT(v.cct_min, v.cct_max) : '—'}
@@ -102,7 +93,8 @@ export function VariantsTable({ variants }: VariantsTableProps) {
                 </td>
                 <td className="px-5 py-3.5">
                   <Link
-                    href={`/products/${v.slug}`}
+                    href={`/products/${productSlug || (v as any).product?.slug}/${v.slug}`}
+                    target="_blank"
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <ExternalLink className="h-4 w-4 text-gray-400" />
@@ -119,19 +111,19 @@ export function VariantsTable({ variants }: VariantsTableProps) {
         {variants.map((v) => (
           <Link
             key={v.id}
-            href={`/products/${v.slug}`}
+            href={`/products/${productSlug || (v as any).product?.slug}/${v.slug}`}
+            target="_blank"
             className="block border border-gray-200 p-4 hover:border-gray-400 transition-colors"
           >
             <div className="flex items-start justify-between mb-2">
               <div>
-                <p className="text-sm font-medium text-gray-900">{v.name}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{v.code}</p>
+                <p className="text-sm font-medium text-gray-900">{v.code}</p>
               </div>
               <ExternalLink className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
-              {v.power_w && <span>{v.power_w}W</span>}
-              {v.lumens && <span>{v.lumens}lm</span>}
+              {(v.power_w_system || v.power_w) && <span>{v.power_w_system ?? v.power_w}W</span>}
+              {(v.lumens_system || v.lumens) && <span>{v.lumens_system ?? v.lumens}lm</span>}
               {(v.cct_min || v.cct_max) && <span>{formatCCT(v.cct_min, v.cct_max)}</span>}
               {v.ip_rating && <span>{v.ip_rating}</span>}
               {v.control_types && v.control_types.length > 0 && (

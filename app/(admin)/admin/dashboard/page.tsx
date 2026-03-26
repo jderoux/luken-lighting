@@ -171,8 +171,7 @@ export default async function AdminDashboard() {
                 className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 -mx-2"
               >
                 <div>
-                  <p className="font-medium">{variant.name}</p>
-                  <p className="text-sm text-gray-500">{variant.code}</p>
+                  <p className="font-medium">{variant.code}</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <span

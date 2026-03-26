@@ -14,15 +14,15 @@ import {
   linkProduct,
   unlinkProduct,
 } from '@/app/(admin)/admin/inspiration/actions';
-import type { InspirationProject, ProjectImage, ProductVariant } from '@/lib/types';
+import type { InspirationProject, ProjectImage, Product } from '@/lib/types';
 
 const STORAGE_BUCKET = 'site-images';
 
 interface Props {
   project: InspirationProject;
   images: ProjectImage[];
-  linkedProducts: ProductVariant[];
-  allProducts: Pick<ProductVariant, 'id' | 'name' | 'slug' | 'code'>[];
+  linkedProducts: Product[];
+  allProducts: Pick<Product, 'id' | 'name' | 'slug'>[];
 }
 
 export function ProjectEditPage({
@@ -171,7 +171,6 @@ export function ProjectEditPage({
     const q = productSearch.toLowerCase();
     return (
       p.name.toLowerCase().includes(q) ||
-      p.code?.toLowerCase().includes(q) ||
       p.slug.toLowerCase().includes(q)
     );
   });
@@ -186,7 +185,7 @@ export function ProjectEditPage({
     } else {
       const product = allProducts.find((p) => p.id === productId);
       if (product) {
-        setLinked((prev) => [...prev, product as ProductVariant]);
+        setLinked((prev) => [...prev, product as Product]);
       }
     }
     setLinking(false);
@@ -370,9 +369,6 @@ export function ProjectEditPage({
               >
                 <div className="min-w-0">
                   <span className="text-sm font-medium">{product.name}</span>
-                  {product.code && (
-                    <span className="ml-2 text-xs text-gray-400">{product.code}</span>
-                  )}
                 </div>
                 <button
                   type="button"
@@ -442,9 +438,6 @@ export function ProjectEditPage({
                       className="w-full text-left px-3 py-2 text-sm hover:bg-white border border-transparent hover:border-gray-200 transition-colors disabled:opacity-50"
                     >
                       <span className="font-medium">{product.name}</span>
-                      {product.code && (
-                        <span className="ml-2 text-xs text-gray-400">{product.code}</span>
-                      )}
                     </button>
                   ))
                 ) : (
